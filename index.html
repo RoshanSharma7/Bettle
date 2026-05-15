@@ -314,13 +314,47 @@ function createBullet(x, y, isP1) {
 function checkWinner() {
 
     if (score1 >= 20) {
+
         winner.style.display = "block";
-        winner.innerHTML = "💖 I Love You Mehraru 💖";
+        winner.innerHTML = "I Love You Laddo 💖";
+
+        setTimeout(() => {
+
+            winner.style.display = "none";
+
+            // RESET SCORES
+            score1 = 0;
+            score2 = 0;
+
+            score1Text.innerHTML = score1;
+            score2Text.innerHTML = score2;
+
+            // UPDATE FIREBASE
+            updatePlayers();
+
+        }, 3000);
     }
 
     if (score2 >= 20) {
+
         winner.style.display = "block";
-        winner.innerHTML = "💖 I Love You Loddu 💖";
+        winner.innerHTML = "I Love You Loddu 💖";
+
+        setTimeout(() => {
+
+            winner.style.display = "none";
+
+            // RESET SCORES
+            score1 = 0;
+            score2 = 0;
+
+            score1Text.innerHTML = score1;
+            score2Text.innerHTML = score2;
+
+            // UPDATE FIREBASE
+            updatePlayers();
+
+        }, 3000);
     }
 }
 
