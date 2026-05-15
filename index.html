@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Love Battle 💖</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    overflow: hidden;
+    background: linear-gradient(135deg, #ff4e8a, #7b2ff7);
+    width: 100vw;
+    height: 100vh;
+    color: white;
+}
+
+#game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+.scoreboard {
+    position: absolute;
+    top: 15px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 100;
+}
+
+.player {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 36px;
+    transition: 0.05s linear;
+}
+
+#player1 {
+    background: #00c3ff;
+    left: 40px;
+    top: 50%;
+}
+
+#player2 {
+    background: #ff69b4;
+    right: 40px;
+    top: 50%;
+}
+
+.bullet {
+    position: absolute;
+    font-size: 28px;
+}
+
+#winner {
+    position: absolute;
+    top: 40%;
+    width: 100%;
+    text-align: center;
+    font-size: 42px;
+    font-weight: bold;
+    display: none;
+    z-index: 200;
+    text-shadow: 0 0 15px white;
+}
+
+.controls {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px;
+}
+
+.control-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.row {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background: white;
+    color: #ff1493;
+    font-size: 22px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <div class="scoreboard">
+        <div>🤵 <span id="score1">0</span></div>
+        <div>👰 <span id="score2">0</span></div>
+    </div>
+
+    <div id="winner"></div>
+
+    <div id="player1" class="player">🤵</div>
+    <div id="player2" class="player">👰</div>
+
+    <div class="controls">
+
+        <!-- PLAYER 1 -->
+        <div class="control-box">
+            <button onclick="movePlayer1(0,-25)">⬆</button>
+
+            <div class="row">
+                <button onclick="movePlayer1(-25,0)">⬅</button>
+                <button onclick="shoot1()">💖</button>
+                <button onclick="movePlayer1(25,0)">➡</button>
+            </div>
+
+            <button onclick="movePlayer1(0,25)">⬇</button>
+        </div>
+
+        <!-- PLAYER 2 -->
+        <div class="control-box">
+            <button onclick="movePlayer2(0,-25)">⬆</button>
+
+            <div class="row">
+                <button onclick="movePlayer2(-25,0)">⬅</button>
+                <button onclick="shoot2()">💖</button>
+                <button onclick="movePlayer2(25,0)">➡</button>
+            </div>
+
+            <button onclick="movePlayer2(0,25)">⬇</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getDatabase,
+    ref,
+    set,
+    onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// REPLACE WITH YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyBby4F0koEm9IgirmT8c2OTPJGW1oFNK4I",
+  authDomain: "laddo-laddu.firebaseapp.com",
+  databaseURL: "https://laddo-laddu-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "laddo-laddu",
+  storageBucket: "laddo-laddu.firebasestorage.app",
+  messagingSenderId: "551084401794",
+  appId: "1:551084401794:web:c0505e05f1fc287acd809b",
+  measurementId: "G-Y96VZHLPCC"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const player1 = document.getElementById("player1");
+const player2 = document.getElementById("player2");
+
+const score1Text = document.getElementById("score1");
+const score2Text = document.getElementById("score2");
+
+const winner = document.getElementById("winner");
+
+let p1x = 40;
+let p1y = window.innerHeight / 2;
+
+let p2x = window.innerWidth - 120;
+let p2y = window.innerHeight / 2;
+
+let score1 = 0;
+let score2 = 0;
+
+function updatePlayers() {
+    set(ref(db, "players"), {
+        p1x,
+        p1y,
+        p2x,
+        p2y,
+        score1,
+        score2
+    });
+}
+
+window.movePlayer1 = function(dx, dy) {
+    p1x += dx;
+    p1y += dy;
+
+    if (p1x < 0) p1x = 0;
+    if (p1x > window.innerWidth - 70) p1x = window.innerWidth - 70;
+
+    if (p1y < 0) p1y = 0;
+    if (p1y > window.innerHeight - 200) p1y = window.innerHeight - 200;
+
+    player1.style.left = p1x + "px";
+    player1.style.top = p1y + "px";
+
+    updatePlayers();
+}
+
+window.movePlayer2 = function(dx, dy) {
+    p2x += dx;
+    p2y += dy;
+
+    if (p2x < 0) p2x = 0;
+    if (p2x > window.innerWidth - 70) p2x = window.innerWidth - 70;
+
+    if (p2y < 0) p2y = 0;
+    if (p2y > window.innerHeight - 200) p2y = window.innerHeight - 200;
+
+    player2.style.left = p2x + "px";
+    player2.style.top = p2y + "px";
+
+    updatePlayers();
+}
+
+window.shoot1 = function() {
+    createBullet(p1x + 35, p1y + 20, true);
+}
+
+window.shoot2 = function() {
+    createBullet(p2x + 35, p2y + 20, false);
+}
+
+function createBullet(x, y, isP1) {
+
+    const bullet = document.createElement("div");
+
+    bullet.classList.add("bullet");
+    bullet.innerHTML = "💖";
+
+    bullet.style.left = x + "px";
+    bullet.style.top = y + "px";
+
+    document.body.appendChild(bullet);
+
+    let interval = setInterval(() => {
+
+        if (isP1) {
+            x += 10;
+        } else {
+            x -= 10;
+        }
+
+        bullet.style.left = x + "px";
+
+        const bulletRect = bullet.getBoundingClientRect();
+
+        const target = isP1
+            ? player2.getBoundingClientRect()
+            : player1.getBoundingClientRect();
+
+        if (
+            bulletRect.left < target.right &&
+            bulletRect.right > target.left &&
+            bulletRect.top < target.bottom &&
+            bulletRect.bottom > target.top
+        ) {
+
+            if (isP1) {
+                score1++;
+                score1Text.innerHTML = score1;
+            } else {
+                score2++;
+                score2Text.innerHTML = score2;
+            }
+
+            updatePlayers();
+            checkWinner();
+
+            bullet.remove();
+            clearInterval(interval);
+        }
+
+        if (x > window.innerWidth || x < 0) {
+            bullet.remove();
+            clearInterval(interval);
+        }
+
+    }, 20);
+}
+
+function checkWinner() {
+
+    if (score1 >= 20) {
+        winner.style.display = "block";
+        winner.innerHTML = "💖 I Love You Mehraru 💖";
+    }
+
+    if (score2 >= 20) {
+        winner.style.display = "block";
+        winner.innerHTML = "💖 I Love You Loddu 💖";
+    }
+}
+
+onValue(ref(db, "players"), (snapshot) => {
+
+    const data = snapshot.val();
+
+    if (!data) return;
+
+    p1x = data.p1x || 40;
+    p1y = data.p1y || window.innerHeight / 2;
+
+    p2x = data.p2x || window.innerWidth - 120;
+    p2y = data.p2y || window.innerHeight / 2;
+
+    score1 = data.score1 || 0;
+    score2 = data.score2 || 0;
+
+    player1.style.left = p1x + "px";
+    player1.style.top = p1y + "px";
+
+    player2.style.left = p2x + "px";
+    player2.style.top = p2y + "px";
+
+    score1Text.innerHTML = score1;
+    score2Text.innerHTML = score2;
+});
+
+</script>
+
+</body>
+</html>
